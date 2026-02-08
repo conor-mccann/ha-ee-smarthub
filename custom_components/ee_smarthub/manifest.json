@@ -1,0 +1,12 @@
+{
+  "domain": "ee_smarthub",
+  "name": "EE SmartHub",
+  "codeowners": ["@conor-mccann"],
+  "config_flow": true,
+  "documentation": "https://github.com/conor-mccann/ha-ee-smarthub",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "loggers": ["ee_smarthub"],
+  "requirements": ["ee-smarthub==0.1.1"],
+  "version": "1.0.0"
+}

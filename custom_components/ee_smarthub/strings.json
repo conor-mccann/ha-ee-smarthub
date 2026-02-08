@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to EE SmartHub",
+        "description": "Enter the credentials for your EE SmartHub router.",
+        "data": {
+          "hostname": "Hostname or IP address",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the SmartHub. Check the hostname and ensure the router is reachable.",
+      "invalid_auth": "Invalid password. Please check your credentials.",
+      "unknown": "An unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This SmartHub is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tracked Devices",
+        "description": "Select which devices to track for presence detection.",
+        "data": {
+          "tracked_devices": "Devices to track"
+        }
+      }
+    }
+  }
+}
