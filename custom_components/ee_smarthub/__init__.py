@@ -2,34 +2,29 @@
 
 from __future__ import annotations
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from ee_smarthub import SmartHubClient
+
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
 
-from .coordinator import EESmartHubCoordinator
+from .coordinator import EESmartHubConfigEntry, EESmartHubDataUpdateCoordinator
 
-type EESmartHubConfigEntry = ConfigEntry[EESmartHubCoordinator]
-
-PLATFORMS = [Platform.DEVICE_TRACKER]
+_PLATFORMS: list[Platform] = [Platform.DEVICE_TRACKER]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: EESmartHubConfigEntry) -> bool:
     """Set up EE SmartHub from a config entry."""
-    coordinator = EESmartHubCoordinator(hass, entry)
-    await coordinator.async_config_entry_first_refresh()
+    client = SmartHubClient(entry.data[CONF_HOST], entry.data[CONF_PASSWORD])
+    coordinator = EESmartHubDataUpdateCoordinator(hass, entry, client)
 
+    await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+
+    await hass.config_entries.async_forward_entry_setups(entry, _PLATFORMS)
 
     return True
 
 
-async def _async_update_listener(hass: HomeAssistant, entry: EESmartHubConfigEntry) -> None:
-    """Handle options update by reloading the entry."""
-    await hass.config_entries.async_reload(entry.entry_id)
-
-
 async def async_unload_entry(hass: HomeAssistant, entry: EESmartHubConfigEntry) -> bool:
     """Unload a config entry."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    return await hass.config_entries.async_unload_platforms(entry, _PLATFORMS)

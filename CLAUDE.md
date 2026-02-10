@@ -19,20 +19,20 @@ This is a **Home Assistant custom integration** for EE SmartHub routers, distrib
 
 All integration code lives under `custom_components/ee_smarthub/`.
 
-- **`__init__.py`** — Entry setup/unload. Creates the coordinator, forwards to the `device_tracker` platform, and registers an update listener for options changes (which triggers a full reload).
-- **`coordinator.py`** — `EESmartHubCoordinator` extends `DataUpdateCoordinator[dict[str, Host]]`. Polls every 30 seconds. Creates a new `SmartHubClient` per update cycle. Returns `{mac_address: Host}` dict. Raises `ConfigEntryAuthFailed` on auth errors.
-- **`device_tracker.py`** — `EESmartHubScannerEntity` extends both `CoordinatorEntity` and `ScannerEntity`. One entity per tracked MAC address. On fresh install, all discovered devices are tracked; users can narrow via options flow.
-- **`config_flow.py`** — Two flows: the initial config flow (hostname + password, validates by calling `get_hosts()`), and an options flow that shows a multi-select of discovered devices to choose which to track.
-- **`const.py`** — Domain name, config keys (`hostname`, `password`, `tracked_devices`), defaults.
-- **`strings.json` / `translations/en.json`** — UI strings for config and options flows (currently identical content).
+- **`__init__.py`** — Entry setup/unload. Creates the `SmartHubClient` and coordinator, forwards to the `device_tracker` platform.
+- **`coordinator.py`** — `EESmartHubDataUpdateCoordinator` extends `DataUpdateCoordinator[dict[str, Host]]`. Polls every 30 seconds. Returns `{mac_address: Host}` dict. Raises `ConfigEntryAuthFailed` on auth errors. Also defines the `EESmartHubConfigEntry` type alias.
+- **`device_tracker.py`** — `EESmartHubScannerEntity` extends both `CoordinatorEntity` and `ScannerEntity`. One entity per discovered MAC address. All entities are **disabled by default** (`_attr_entity_registry_enabled_default = False`); users enable the ones they want.
+- **`config_flow.py`** — Single config flow (host + password, validates by calling `get_hosts()`). Uses `_async_abort_entries_match` to prevent duplicates. No options flow yet.
+- **`const.py`** — Domain name and defaults (`DEFAULT_HOST`, `DEFAULT_SCAN_INTERVAL`). Uses HA's built-in `CONF_HOST` and `CONF_PASSWORD` constants.
+- **`strings.json` / `translations/en.json`** — UI strings for the config flow, using HA common translation keys where possible.
 
 ## Key Patterns
 
 - Coordinator stores data as `dict[str, Host]` keyed by MAC address.
 - `entry.runtime_data` stores the coordinator instance (no `hass.data[DOMAIN]` pattern).
-- No devices are tracked by default on fresh install; users must select devices via the options flow.
-- Options updates trigger a full config entry reload via `_async_update_listener`.
-- Config flow uses `_async_abort_entries_match` on hostname to prevent duplicates.
+- `SmartHubClient` is created in `__init__.py` and injected into the coordinator.
+- All discovered devices are added as disabled entities; users enable what they want.
+- New devices connecting after initial setup are not added until integration reload.
 - The integration uses `iot_class: local_polling` — all communication is local to the network.
 
 ## Development

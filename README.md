@@ -21,8 +21,8 @@ A [Home Assistant](https://www.home-assistant.io/) custom integration for EE Sma
 
 1. Go to **Settings** > **Devices & Services** > **Add Integration**
 2. Search for "EE SmartHub"
-3. Enter your router's hostname (default: `192.168.1.1`) and password
-4. After setup, go to the integration's **Options** to select which devices to track
+3. Enter your router's host (default: `192.168.1.1`) and password
+4. All discovered devices are added as **disabled entities** — enable the ones you want to track in the entity registry
 
 ## How It Works
 

@@ -2,32 +2,19 @@
   "config": {
     "step": {
       "user": {
-        "title": "Connect to EE SmartHub",
-        "description": "Enter the credentials for your EE SmartHub router.",
         "data": {
-          "hostname": "Hostname or IP address",
-          "password": "Password"
+          "host": "[%key:common::config_flow::data::host%]",
+          "password": "[%key:common::config_flow::data::password%]"
         }
       }
     },
     "error": {
-      "cannot_connect": "Unable to connect to the SmartHub. Check the hostname and ensure the router is reachable.",
-      "invalid_auth": "Invalid password. Please check your credentials.",
-      "unknown": "An unexpected error occurred."
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "This SmartHub is already configured."
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "Tracked Devices",
-        "description": "Select which devices to track for presence detection.",
-        "data": {
-          "tracked_devices": "Devices to track"
-        }
-      }
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
   }
 }
