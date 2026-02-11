@@ -1,10 +1,19 @@
 """Device tracker platform for the EE SmartHub integration."""
 
-from homeassistant.components.device_tracker.config_entry import ScannerEntity
-from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity, HomeAssistant
+from __future__ import annotations
 
+from datetime import datetime
+
+from homeassistant.components.device_tracker.config_entry import ScannerEntity
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util.dt import utcnow
+
+from .const import CONSIDER_HOME_INTERVAL
 from .coordinator import EESmartHubConfigEntry, EESmartHubDataUpdateCoordinator
+
+PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
@@ -38,6 +47,7 @@ class EESmartHubScannerEntity(
         super().__init__(coordinator)
         self._attr_unique_id = mac_address
         self._attr_mac_address = mac_address
+        self._last_seen: datetime | None = None
 
     @property
     def name(self) -> str | None:
@@ -62,7 +72,18 @@ class EESmartHubScannerEntity(
 
     @property
     def is_connected(self) -> bool:
-        """Return true if the device is connected."""
-        if (host := self.coordinator.data.get(self.unique_id)) is None:
+        """Return true if the device is connected or was recently seen."""
+        host = self.coordinator.data.get(self.unique_id)
+        if host is not None and host.active:
+            return True
+        if self._last_seen is None:
             return False
-        return host.active
+        return (utcnow() - self._last_seen).total_seconds() < CONSIDER_HOME_INTERVAL
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Update last seen timestamp when device is active."""
+        host = self.coordinator.data.get(self.unique_id)
+        if host is not None and host.active:
+            self._last_seen = utcnow()
+        super()._handle_coordinator_update()

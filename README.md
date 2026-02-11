@@ -28,6 +28,8 @@ A [Home Assistant](https://www.home-assistant.io/) custom integration for EE Sma
 
 The integration polls your EE SmartHub router every 30 seconds over your local network. It fetches the serial number via HTTPS, then queries connected devices using USP over MQTT. No cloud services are involved — all communication stays on your LAN.
 
+Devices remain marked as "home" for 5 minutes after they were last seen active, preventing rapid toggling between home and away states.
+
 ## Disclaimer
 
 This project is not affiliated with, endorsed by, or associated with EE Limited or BT Group. "EE" and "SmartHub" are trademarks of their respective owners.
