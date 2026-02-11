@@ -23,11 +23,24 @@ async def async_setup_entry(
 ) -> None:
     """Set up EE SmartHub device tracker entities."""
     coordinator = entry.runtime_data
+    tracked_devices: set[str] = set()
 
-    async_add_entities(
-        EESmartHubScannerEntity(coordinator, mac_address)
-        for mac_address in coordinator.data
-    )
+    @callback
+    def async_add_new_entities() -> None:
+        latest_devices = set(coordinator.data.keys())
+        new_devices = latest_devices - tracked_devices
+
+        if not new_devices:
+            return
+
+        tracked_devices.update(new_devices)
+        async_add_entities(
+            EESmartHubScannerEntity(coordinator, mac_address)
+            for mac_address in new_devices
+        )
+
+    async_add_new_entities()
+    entry.async_on_unload(coordinator.async_add_listener(async_add_new_entities))
 
 
 class EESmartHubScannerEntity(

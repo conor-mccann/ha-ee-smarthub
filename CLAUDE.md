@@ -32,7 +32,7 @@ All integration code lives under `custom_components/ee_smarthub/`.
 - `entry.runtime_data` stores the coordinator instance (no `hass.data[DOMAIN]` pattern).
 - `SmartHubClient` is created in `__init__.py` and injected into the coordinator.
 - All discovered devices are added as disabled entities; users enable what they want.
-- New devices connecting after initial setup are not added until integration reload.
+- New devices are dynamically discovered on each coordinator poll — no reload needed.
 - The integration uses `iot_class: local_polling` — all communication is local to the network.
 
 ## Development
