@@ -11,6 +11,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DEFAULT_HOST, DOMAIN
 
@@ -26,8 +27,9 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """Validate the user input allows us to connect."""
-    client = SmartHubClient(data[CONF_HOST], data[CONF_PASSWORD])
-    await client.get_hosts()
+    session = async_get_clientsession(hass)
+    client = SmartHubClient(data[CONF_HOST], data[CONF_PASSWORD], session)
+    await client.validate_connection()
 
     return {"title": f"EE SmartHub ({data[CONF_HOST]})"}
 

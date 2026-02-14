@@ -6,6 +6,7 @@ from datetime import datetime
 
 from homeassistant.components.device_tracker.config_entry import ScannerEntity
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util.dt import utcnow
@@ -23,21 +24,29 @@ async def async_setup_entry(
 ) -> None:
     """Set up EE SmartHub device tracker entities."""
     coordinator = entry.runtime_data
+    entity_registry = er.async_get(hass)
     tracked_devices: set[str] = set()
 
     @callback
     def async_add_new_entities() -> None:
         latest_devices = set(coordinator.data.keys())
-        new_devices = latest_devices - tracked_devices
+        devices_to_remove = tracked_devices - latest_devices
+        devices_to_add = latest_devices - tracked_devices
 
-        if not new_devices:
-            return
+        for entity_entry in entity_registry.entities.get_entries_for_config_entry_id(
+            entry.entry_id
+        ):
+            if entity_entry.unique_id in devices_to_remove:
+                entity_registry.async_remove(entity_entry.entity_id)
 
-        tracked_devices.update(new_devices)
-        async_add_entities(
-            EESmartHubScannerEntity(coordinator, mac_address)
-            for mac_address in new_devices
-        )
+        if devices_to_add:
+            async_add_entities(
+                EESmartHubScannerEntity(coordinator, mac_address)
+                for mac_address in devices_to_add
+            )
+
+        tracked_devices.clear()
+        tracked_devices.update(latest_devices)
 
     async_add_new_entities()
     entry.async_on_unload(coordinator.async_add_listener(async_add_new_entities))
