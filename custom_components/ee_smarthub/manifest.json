@@ -8,5 +8,5 @@
   "iot_class": "local_polling",
   "loggers": ["ee_smarthub"],
   "requirements": ["ee-smarthub==0.2.0"],
-  "version": "0.4.0"
+  "version": "0.4.1"
 }
