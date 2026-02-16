@@ -72,6 +72,15 @@ class EESmartHubScannerEntity(
         self._last_seen: datetime | None = None
 
     @property
+    def available(self) -> bool:
+        """Return True even when coordinator update fails.
+
+        Transient timeouts should not send devices to "unknown" — the cached
+        data and consider-home logic remain valid.
+        """
+        return True
+
+    @property
     def name(self) -> str | None:
         """Return the name of the device."""
         if (host := self.coordinator.data.get(self.unique_id)) is None:
