@@ -43,7 +43,10 @@ class EESmartHubDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Host]]):
         """Fetch data from EE SmartHub."""
         try:
             hosts = await self._client.get_hosts()
-            return {host.mac_address: host for host in hosts}
+            # Sort so an active entry wins if the router lists a MAC twice.
+            return {
+                host.mac_address: host for host in sorted(hosts, key=lambda h: h.active)
+            }
         except AuthenticationError as err:
             raise ConfigEntryAuthFailed(
                 translation_domain=DOMAIN,

@@ -20,7 +20,7 @@ All integration code lives under `custom_components/ee_smarthub/`.
 
 - **`__init__.py`** — Entry setup/unload. Creates the `SmartHubClient` (with HA's shared aiohttp session) and coordinator, forwards to the `device_tracker` platform. Pre-loads pydantic modules on an executor to work around betterproto2's optional lazy import of pydantic failing in the event loop.
 - **`coordinator.py`** — `EESmartHubDataUpdateCoordinator` extends `DataUpdateCoordinator[dict[str, Host]]`. Polls every 30 seconds. Returns `{mac_address: Host}` dict. Raises `ConfigEntryAuthFailed` on auth errors. Also defines the `EESmartHubConfigEntry` type alias.
-- **`device_tracker.py`** — `EESmartHubScannerEntity` extends both `CoordinatorEntity` and `ScannerEntity`. One entity per discovered MAC address. All entities are **disabled by default** (`_attr_entity_registry_enabled_default = False`); users enable the ones they want. Implements a "consider home" interval (10 min) to prevent flapping from WiFi power-saving. Overrides `available` to always return `True` so transient coordinator failures (timeouts) don't send devices to "unknown".
+- **`device_tracker.py`** — `EESmartHubScannerEntity` extends both `CoordinatorEntity` and `ScannerEntity`. One entity per discovered MAC address. Entities are **disabled by default** via HA's `ScannerEntity` logic (no matching device entry); users enable the ones they want. Still-disabled registry entries are removed once the router forgets the MAC; enabled ones are kept so person assignments survive. Implements a "consider home" interval (10 min, a `timedelta` in `const.py`) to prevent flapping from WiFi power-saving. Overrides `available` to always return `True` so transient coordinator failures (timeouts) don't send devices to "unknown".
 - **`config_flow.py`** — Single config flow (host + password, validates by calling `validate_connection()`). Uses `_async_abort_entries_match` to prevent duplicates. No options flow yet.
 - **`const.py`** — Domain name and defaults (`DEFAULT_HOST`, `DEFAULT_SCAN_INTERVAL`, `CONSIDER_HOME_INTERVAL`). Uses HA's built-in `CONF_HOST` and `CONF_PASSWORD` constants.
 - **`strings.json` / `translations/en.json`** — UI strings for the config flow, using HA common translation keys where possible.
@@ -32,7 +32,7 @@ All integration code lives under `custom_components/ee_smarthub/`.
 - `SmartHubClient` is created in `__init__.py` and injected into the coordinator.
 - All discovered devices are added as disabled entities; users enable what they want.
 - New devices are dynamically discovered on each coordinator poll — no reload needed.
-- Devices removed from the router are automatically cleaned up from the entity registry.
+- Disabled entities for MACs the router has forgotten are removed from the registry; enabled ones are never auto-removed.
 - `SmartHubClient` receives HA's shared aiohttp session via `async_get_clientsession(hass)`.
 - The integration uses `iot_class: local_polling` — all communication is local to the network.
 
