@@ -1,0 +1,2 @@
+pytest-homeassistant-custom-component
+ee-smarthub==0.5.0

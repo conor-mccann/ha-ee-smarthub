@@ -7,9 +7,10 @@ from datetime import datetime
 from ee_smarthub import Host
 
 from homeassistant.components.device_tracker import STATE_HOME, ScannerEntity
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
@@ -72,6 +73,7 @@ class EESmartHubScannerEntity(
         super().__init__(coordinator)
         self._attr_mac_address = mac_address
         self._last_seen: datetime | None = None
+        self._expiry_unsub: CALLBACK_TYPE | None = None
 
     @property
     def available(self) -> bool:
@@ -111,8 +113,9 @@ class EESmartHubScannerEntity(
         if (last_state := await self.async_get_last_state()) and (
             last_state.state == STATE_HOME
         ):
-            self._last_seen = dt_util.utcnow()
+            self._set_last_seen()
         self._update_last_seen()
+        self.async_on_remove(self._cancel_expiry)
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -123,4 +126,28 @@ class EESmartHubScannerEntity(
     def _update_last_seen(self) -> None:
         # Ignore stale data kept after a failed update.
         if self.coordinator.last_update_success and (host := self._host) and host.active:
-            self._last_seen = dt_util.utcnow()
+            self._set_last_seen()
+
+    @callback
+    def _set_last_seen(self) -> None:
+        """Record a sighting and schedule the state write for when it expires.
+
+        The coordinator does not notify listeners on repeated failed polls, so
+        without this a device would stay home through a sustained outage.
+        """
+        self._last_seen = dt_util.utcnow()
+        self._cancel_expiry()
+        self._expiry_unsub = async_track_point_in_utc_time(
+            self.hass, self._async_expire, self._last_seen + CONSIDER_HOME_INTERVAL
+        )
+
+    @callback
+    def _cancel_expiry(self) -> None:
+        if self._expiry_unsub:
+            self._expiry_unsub()
+            self._expiry_unsub = None
+
+    @callback
+    def _async_expire(self, _now: datetime) -> None:
+        self._expiry_unsub = None
+        self.async_write_ha_state()

@@ -20,7 +20,7 @@ All integration code lives under `custom_components/ee_smarthub/`.
 
 - **`__init__.py`** — Entry setup/unload. Creates the `SmartHubClient` (with HA's shared aiohttp session) and coordinator, forwards to the `device_tracker` platform. Pre-loads pydantic modules on an executor to work around betterproto2's optional lazy import of pydantic failing in the event loop.
 - **`coordinator.py`** — `EESmartHubDataUpdateCoordinator` extends `DataUpdateCoordinator[dict[str, Host]]`. Polls every 30 seconds. Returns `{mac_address: Host}` dict. Raises `ConfigEntryAuthFailed` on auth errors. Also defines the `EESmartHubConfigEntry` type alias.
-- **`device_tracker.py`** — `EESmartHubScannerEntity` extends both `CoordinatorEntity` and `ScannerEntity`. One entity per discovered MAC address. Entities are **disabled by default** via HA's `ScannerEntity` logic (no matching device entry); users enable the ones they want. Still-disabled registry entries are removed once the router forgets the MAC; enabled ones are kept so person assignments survive. Implements a "consider home" interval (10 min, a `timedelta` in `const.py`) to prevent flapping from WiFi power-saving. Overrides `available` to always return `True` so transient coordinator failures (timeouts) don't send devices to "unknown".
+- **`device_tracker.py`** — `EESmartHubScannerEntity` extends both `CoordinatorEntity` and `ScannerEntity`. One entity per discovered MAC address. Entities are **disabled by default** via HA's `ScannerEntity` logic (no matching device entry); users enable the ones they want. Still-disabled registry entries are removed once the router forgets the MAC; enabled ones are kept so person assignments survive. Implements a "consider home" interval (10 min, a `timedelta` in `const.py`) to prevent flapping from WiFi power-saving; each sighting schedules a state write at expiry, because the coordinator doesn't notify listeners on repeated failed polls. Overrides `available` to always return `True` so transient coordinator failures (timeouts) don't send devices to "unknown".
 - **`config_flow.py`** — Config flow with `user`, `reauth`/`reauth_confirm` (new password; triggered by the coordinator's `ConfigEntryAuthFailed`) and `reconfigure` (change host and/or password) steps. All validate via `_async_validate()`, which calls `validate_connection()` and returns `(serial, error)`; the router serial is the entry's unique ID. The user step follows an already-configured router to a new host via `_abort_if_unique_id_configured(updates=...)`; reauth/reconfigure abort with `wrong_device` on serial mismatch; `async_setup_entry` backfills the serial for legacy entries. No options flow yet.
 - **`const.py`** — Domain name and defaults (`DEFAULT_HOST`, `DEFAULT_SCAN_INTERVAL`, `CONSIDER_HOME_INTERVAL`). Uses HA's built-in `CONF_HOST` and `CONF_PASSWORD` constants.
 - **`strings.json` / `translations/en.json`** — UI strings for the config flow, using HA common translation keys where possible.
@@ -44,7 +44,7 @@ Python 3.14 venv at `.venv/`. Activate with:
 source .venv/bin/activate
 ```
 
-No build system, tests, linter config, or CI are currently configured in this repo.
+Tests live in `tests/` (`pip install -r requirements_test.txt`, then `pytest`). They use `pytest-homeassistant-custom-component` with `SmartHubClient` mocked. No build system, linter config, or CI is configured.
 
 ## Tool Usage
 
