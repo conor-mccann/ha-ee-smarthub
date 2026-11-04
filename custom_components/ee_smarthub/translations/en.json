@@ -1,21 +1,36 @@
 {
-    "config": {
-        "abort": {
-            "already_configured": "Device is already configured"
-        },
-        "error": {
-            "cannot_connect": "Failed to connect",
-            "invalid_auth": "Invalid authentication",
-            "unknown": "Unexpected error"
-        },
-        "step": {
-            "user": {
-                "data": {
-                    "host": "Host",
-                    "password": "Password"
-                }
-            }
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "host": "Host",
+          "password": "Password"
         }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate",
+        "description": "The password for the router at {host} is no longer accepted. Enter the current password.",
+        "data": {
+          "password": "Password"
+        }
+      },
+      "reconfigure": {
+        "data": {
+          "host": "Host",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured",
+      "wrong_device": "The router at this address is not the one this entry was set up for",
+      "reauth_successful": "Re-authentication was successful",
+      "reconfigure_successful": "Re-configuration was successful"
     }
+  }
 }
-

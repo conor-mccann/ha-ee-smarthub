@@ -7,6 +7,6 @@
   "integration_type": "hub",
   "iot_class": "local_polling",
   "loggers": ["ee_smarthub"],
-  "requirements": ["ee-smarthub==0.3.0"],
+  "requirements": ["ee-smarthub==0.5.0"],
   "version": "0.4.3"
 }

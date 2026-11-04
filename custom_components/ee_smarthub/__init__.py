@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from importlib import import_module
 
-from ee_smarthub import SmartHubClient
+from ee_smarthub import AuthenticationError, SmartHubClient, SmartHubError
 
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .coordinator import EESmartHubConfigEntry, EESmartHubDataUpdateCoordinator
@@ -27,6 +28,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: EESmartHubConfigEntry) -
 
     session = async_get_clientsession(hass)
     client = SmartHubClient(entry.data[CONF_HOST], entry.data[CONF_PASSWORD], session)
+
+    # Entries created before unique IDs were introduced: backfill the serial.
+    if entry.unique_id is None:
+        try:
+            serial = await client.validate_connection()
+        except AuthenticationError as err:
+            raise ConfigEntryAuthFailed from err
+        except SmartHubError as err:
+            raise ConfigEntryNotReady from err
+        hass.config_entries.async_update_entry(entry, unique_id=serial)
+
     coordinator = EESmartHubDataUpdateCoordinator(hass, entry, client)
 
     await coordinator.async_config_entry_first_refresh()
