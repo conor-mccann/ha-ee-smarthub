@@ -125,7 +125,13 @@ class EESmartHubScannerEntity(
 
     def _update_last_seen(self) -> None:
         # Ignore stale data kept after a failed update.
-        if self.coordinator.last_update_success and (host := self._host) and host.active:
+        # `active` alone can stay set after a device has left.
+        if (
+            self.coordinator.last_update_success
+            and (host := self._host)
+            and host.active
+            and host.connected
+        ):
             self._set_last_seen()
 
     @callback

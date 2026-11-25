@@ -93,6 +93,28 @@ async def test_consider_home_expiry(
     assert hass.states.get(entity.entity_id).state == STATE_NOT_HOME
 
 
+async def test_active_but_unconnected_device_expires(
+    hass: HomeAssistant,
+    mock_client: MagicMock,
+    mock_config_entry: MockConfigEntry,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """A device the router calls active but shows no link for goes away."""
+    mock_config_entry.add_to_hass(hass)
+    entity = _enable(hass, mock_config_entry)
+    await _setup(hass, mock_config_entry)
+    assert hass.states.get(entity.entity_id).state == STATE_HOME
+
+    _set_hosts(mock_client, Host(mac_address=MAC, active=True, connected=False))
+    freezer.tick(CONSIDER_HOME_INTERVAL - timedelta(seconds=1))
+    await _poll(hass, mock_config_entry)
+    assert hass.states.get(entity.entity_id).state == STATE_HOME
+
+    freezer.tick(timedelta(seconds=2))
+    await _poll(hass, mock_config_entry)
+    assert hass.states.get(entity.entity_id).state == STATE_NOT_HOME
+
+
 async def test_failed_poll_does_not_refresh_last_seen(
     hass: HomeAssistant,
     mock_client: MagicMock,

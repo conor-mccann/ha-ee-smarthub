@@ -9,9 +9,9 @@ This is a **Home Assistant custom integration** for EE SmartHub routers, distrib
 
 ## Dependencies
 
-- **Python library:** `ee-smarthub==0.5.0` — async client that communicates with EE SmartHub routers. Fetches the router serial via HTTPS (`/config.json`), then queries `Device.Hosts.Host.*` via USP/MQTT to get connected devices. Uses betterproto2 for USP protobuf messages.
+- **Python library:** `ee-smarthub==0.6.0` — async client that communicates with EE SmartHub routers. Fetches the router serial via HTTPS (`/config.json`), then queries `Device.Hosts.Host.*` via USP/MQTT to get connected devices. Uses betterproto2 for USP protobuf messages.
 - **Key types from `ee_smarthub`:** `SmartHubClient`, `Host`, `AuthenticationError`, `SmartHubError`
-- The `Host` dataclass has fields: `mac_address`, `ip_address`, `hostname`, `user_friendly_name`, `interface_type`, `active`, `frequency_band`, `bytes_sent`, `bytes_received`. `Host.name` is a property that cascades: `user_friendly_name` → `hostname` → `mac_address`.
+- The `Host` dataclass has fields: `mac_address`, `ip_address`, `hostname`, `user_friendly_name`, `interface_type`, `active`, `frequency_band`, `bytes_sent`, `bytes_received`, `connected`. A device counts as seen only if both `active` and `connected` are true, because the router can leave `active` set after a device has left. `Host.name` is a property that cascades: `user_friendly_name` → `hostname` → `mac_address`.
 - `SmartHubClient` accepts an `aiohttp.ClientSession` parameter for shared session management.
 
 ## Architecture
